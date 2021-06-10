@@ -1,0 +1,66 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: сборка",
+            "command": "make",
+            "args": [
+                "-C",
+                "${workspaceFolder}\\build"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Компилятор: make",
+            "dependsOn": [
+                "Shaders Copy",
+                "Выполнение cmake"
+            ],
+            "dependsOrder": "sequence"
+        },
+        {
+            "type": "shell",
+            "label": "Выполнение cmake",
+            "command": "cmake",
+            "args": [
+                "-S",
+                "${workspaceFolder}",
+                "-B",
+                "${workspaceFolder}\\build",
+                "-G",
+                "\"MSYS Makefiles\""
+            ],
+            "problemMatcher": []
+        },
+        {
+            "type": "shell",
+            "label": "Shader Compiler",
+            "command": "glslc",
+            "args": [
+                "${file}",
+                "-o",
+                "compiled/${fileBasename}.spv"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "type": "shell",
+            "label": "Shaders Copy",
+            "command": "copy",
+            "args": [
+                "/Y",
+                "${workspaceFolder}\\shaders\\compiled\\*.*",
+                "${workspaceFolder}\\build\\shaders"
+            ],
+            "problemMatcher": []
+        }
+    ],
+    "version": "2.0.0"
+}
