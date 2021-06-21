@@ -19,6 +19,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <chrono>
+#include <iostream>
 
 #include <vulkan/vulkan.h>
 
@@ -144,8 +145,11 @@ public:
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    float angleZ = 0;
-    float angleY = 0;
+    float* posX = 0;
+    float* posY = 0;
+    float* posZ = 0;
+    float* angleZ = 0;
+    float* angleY = 0;
 
     void run(){
         windowInit();
@@ -252,7 +256,7 @@ private:
     }
     void getInstance(VkInstanceCreateInfo info){
         if (vkCreateInstance(&info, NULL, &inst) != VK_SUCCESS) 
-            throw std::runtime_error("failed to create instance!");;
+            throw std::runtime_error("failed to create instance!");
     }
     void getPhisicalDevices(){
         uint32_t deviceCount = 0;
@@ -568,7 +572,8 @@ private:
         depthStencil.stencilTestEnable = VK_FALSE;
 
         VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | 
+            VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         colorBlendAttachment.blendEnable = VK_FALSE;
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
         colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -969,7 +974,9 @@ private:
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+            stagingBuffer, stagingBufferMemory);
 
         void* data;
         vkMapMemory(logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -1061,7 +1068,8 @@ private:
 
             if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) 
                 return format;
-            else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+            else if (tiling == VK_IMAGE_TILING_OPTIMAL && 
+                (props.optimalTilingFeatures & features) == features)
                 return format;
         }
         throw std::runtime_error("failed to find supported format!");
@@ -1125,14 +1133,17 @@ private:
     }
     void updateUniformBuffer(uint32_t currentImage) {
         UniformBufferObject ubo{};
-        ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(angleZ, angleY, 0.0f));
+        ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(*posX, *posY, *posZ));
         ubo.model = glm::scale(ubo.model, glm::vec3(1.25f));
-        // ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), //time * 20.0f
+        // ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(*angleZ), //time * 20.0f
         //      glm::vec3(1.0f, 0.0f, 0.0f));
-        // ubo.model = glm::rotate(ubo.model, glm::radians(angleZ), //time * 20.0f
-        //      glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(20.0f, 0.0f, 8.0f), 
-            glm::vec3(20.0f, 1.0f, 8.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // ubo.model = glm::rotate(ubo.model, glm::radians(*angleY), //time * 20.0f
+        //      glm::vec3(0.0f, 1.0f, 0.0f));
+        ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), 
+            glm::vec3(0 * glm::cos(glm::radians(*angleZ + 90) * glm::cos(glm::radians(*angleY))), 
+            glm::sin(glm::radians(*angleZ + 90)) * glm::cos(glm::radians(*angleY)), 
+            glm::sin(glm::radians(*angleY))), 
+            glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.proj = glm::perspective(glm::radians(45.0f), 
             swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 100.0f);
         ubo.proj[1][1] *= -1;
@@ -1215,18 +1226,20 @@ private:
         if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT || 
             key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && action == GLFW_PRESS){
             auto app = reinterpret_cast<Graphic*>(glfwGetWindowUserPointer(window));
+            float* z = app->angleZ;
+            float* y = app->angleY;
             switch(key){
                 case GLFW_KEY_LEFT:
-                    app->angleZ -= 5;
+                    *z += 5;
                     break;
                 case GLFW_KEY_RIGHT:
-                    app->angleZ += 5;
+                    *z -= 5;
                     break;
                 case GLFW_KEY_UP:
-                    app->angleY += 5;
+                    *y += 5;
                     break;
                 case GLFW_KEY_DOWN:
-                    app->angleY -= 5;
+                    *y += 5;
                     break;
             }
         }

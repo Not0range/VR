@@ -6,7 +6,8 @@
             "command": "make",
             "args": [
                 "-C",
-                "${workspaceFolder}\\build"
+                "${workspaceFolder}\\build",
+                "-B"
             ],
             "problemMatcher": [
                 "$gcc"
@@ -32,7 +33,7 @@
                 "-B",
                 "${workspaceFolder}\\build",
                 "-G",
-                "\"MSYS Makefiles\""
+                "\"Unix Makefiles\""
             ],
             "problemMatcher": []
         },
